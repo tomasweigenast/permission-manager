@@ -5,20 +5,31 @@ using PermissionManager.Domain.Interfaces;
 
 namespace PermissionManager.Application.Commands.ModifyPermission;
 
+/// <summary>
+/// Handles the modification of an existing permission.
+/// <param name="unitOfWork">The unit of work for data access.</param>
+/// <param name="ftsService">The full-text search service for indexing.</param>
+/// <param name="producerService">The service for producing operation events.</param>
+/// </summary>
 public class ModifyPermissionHandler(IUnitOfWork unitOfWork, IFullTextSearchService ftsService, IProducerService producerService) : IRequestHandler<ModifyPermissionCommand, int>
 {
+    /// <summary>
+    /// Handles the ModifyPermissionCommand request.
+    /// <param name="request">The command containing updated permission details.</param>
+    /// <param name="cancellationToken">Token for cancelling the operation.</param>
+    /// <returns>The ID of the modified permission.</returns>
+    /// </summary>
     public async Task<int> Handle(ModifyPermissionCommand request, CancellationToken cancellationToken)
     {
-        var existing = await unitOfWork.Permissions.GetByIdAsync(request.Id, cancellationToken);
-        if (existing == null) throw new KeyNotFoundException($"Permission {request.Id} not found");
-        
-        if(!string.IsNullOrWhiteSpace(request.EmployeeName))
+        var existing = await unitOfWork.Permissions.GetByIdAsync(request.Id, cancellationToken) ?? throw new KeyNotFoundException($"Permission {request.Id} not found");
+
+        if (!string.IsNullOrWhiteSpace(request.EmployeeName))
             existing.EmployeeName = request.EmployeeName;
-        
-        if(!string.IsNullOrWhiteSpace(request.EmployeeSurname))
+
+        if (!string.IsNullOrWhiteSpace(request.EmployeeSurname))
             existing.EmployeeSurname = request.EmployeeSurname;
-        
-        if(request.PermissionTypeId.HasValue)
+
+        if (request.PermissionTypeId.HasValue)
             existing.PermissionTypeId = request.PermissionTypeId.Value;
 
         // implement a more durable, robust way of doing this
@@ -32,7 +43,7 @@ public class ModifyPermissionHandler(IUnitOfWork unitOfWork, IFullTextSearchServ
             // index in fts
             // if this fails, it will revert sql server
             await ftsService.IndexPermissionAsync(existing, cancellationToken);
-            
+
             // publish event
             try
             {
@@ -44,7 +55,7 @@ public class ModifyPermissionHandler(IUnitOfWork unitOfWork, IFullTextSearchServ
             {
                 // delete from fts
                 await ftsService.DeletePermissionAsync(existing.Id, cancellationToken);
-                
+
                 // throw to revert sql server
                 throw;
             }

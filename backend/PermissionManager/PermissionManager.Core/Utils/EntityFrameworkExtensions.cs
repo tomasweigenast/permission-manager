@@ -6,7 +6,7 @@ namespace PermissionManager.Core.Utils;
 public static class EntityFrameworkExtensions
 {
     /// <summary>
-    /// Asynchronously creates a <see cref="IPagedEnumerable{T}"/> from an <see cref="IQueryable{T}"/> by enumerating it asynchronously.
+    /// Asynchronously creates a <see cref="PagedList{T}"/> from an <see cref="IQueryable{T}"/> by enumerating it asynchronously.
     /// </summary>
     /// <param name="query">The <see cref="IQueryable{T}"/> to paginate.</param>
     /// <param name="pageNumber">The page number.</param>

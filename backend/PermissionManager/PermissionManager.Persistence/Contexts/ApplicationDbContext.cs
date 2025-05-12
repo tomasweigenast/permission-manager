@@ -3,10 +3,20 @@ using PermissionManager.Domain.Entities;
 
 namespace PermissionManager.Persistence.Contexts;
 
+/// <summary>
+/// The default <see cref="DbContext"/> of the application.
+/// </summary>
+/// <param name="options"></param>
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
+    /// <summary>
+    /// A <see cref="DbSet{TEntity}"/> which represents the Permissions table.
+    /// </summary>
     public DbSet<Permission> Permissions { get; set; }
 
+    /// <summary>
+    /// A <see cref="DbSet{TEntity}"/> which represents the PermissionTypes table.
+    /// </summary>
     public DbSet<PermissionType> PermissionTypes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

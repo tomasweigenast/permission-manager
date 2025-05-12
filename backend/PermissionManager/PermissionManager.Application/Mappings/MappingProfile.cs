@@ -9,6 +9,9 @@ using PermissionManager.Domain.Entities;
 
 namespace PermissionManager.Application.Mappings;
 
+/// <summary>
+/// The default AutoMapper mapping <see cref="Profile"/>
+/// </summary>
 public class MappingProfile : Profile
 {
     public MappingProfile()

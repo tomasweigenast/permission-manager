@@ -4,6 +4,9 @@ using PermissionManager.Domain.Interfaces;
 
 namespace PermissionManager.Application.Validators;
 
+/// <summary>
+/// An <see cref="AbstractValidator{T}"/> which validates a <see cref="RequestPermissionDto"/> record
+/// </summary>
 public class RequestPermissionDtoValidator : AbstractValidator<RequestPermissionDto>
 {
     public RequestPermissionDtoValidator(IPermissionTypeRepository permissionTypeRepository)

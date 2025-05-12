@@ -1,6 +1,9 @@
 namespace PermissionManager.API.Utils;
 
-public class PagedResponse<T>
+/// <summary>
+/// A class that is used to return paginated lists
+/// </summary>
+public record PagedResponse<T>
 {
     public required IEnumerable<T> Data { get; init; }
     

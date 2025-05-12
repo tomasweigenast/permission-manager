@@ -4,6 +4,9 @@ using PermissionManager.Persistence.Contexts;
 
 namespace PermissionManager.Persistence.Data;
 
+/// <summary>
+/// A helper class which is used to seed the database.
+/// </summary>
 public static class ApplicationDbSeeder
 {
     private static readonly string[] Permissions = ["Acceso a planta de producción", "Acceso a administración", "Acceso a sistemas"];

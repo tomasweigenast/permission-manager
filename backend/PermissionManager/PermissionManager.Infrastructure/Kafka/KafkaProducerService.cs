@@ -8,6 +8,9 @@ using PermissionManager.Application.Interfaces;
 
 namespace PermissionManager.Infrastructure.Kafka;
 
+/// <summary>
+/// Provides Kafka-based message production for operations.
+/// </summary>
 public class KafkaProducerService(IOptions<KafkaOptions> kafkaOptions, ILogger<KafkaProducerService> logger) : IProducerService, IDisposable
 {
     private readonly JsonSerializerOptions _jsonSerializerOptions =
@@ -28,6 +31,7 @@ public class KafkaProducerService(IOptions<KafkaOptions> kafkaOptions, ILogger<K
         MaxInFlight = 5
     }).Build();
 
+    /// <inheritdoc/>
     public async Task ProduceAsync(OperationDto operation, CancellationToken ct = default)
     {
         var json = JsonSerializer.Serialize(operation, _jsonSerializerOptions);
@@ -35,9 +39,10 @@ public class KafkaProducerService(IOptions<KafkaOptions> kafkaOptions, ILogger<K
         logger.LogInformation("Produced {@Operation} with Value {Value} at Timestamp {Timestamp}. Status {Status}", operation, result.Value, result.Timestamp.UtcDateTime, result.Status);
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
-       GC.SuppressFinalize(this);
-       _kafkaProducer.Dispose();   
+        GC.SuppressFinalize(this);
+        _kafkaProducer.Dispose();
     }
 }

@@ -12,6 +12,9 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace PermissionManager.API.Controllers;
 
+/// <summary>
+/// A controller that handles <see cref="PermissionManager.Domain.Entities.Permission"/>
+/// </summary>
 [ApiController]
 [Route("api/permissions")]
 [Produces("application/json")]
@@ -22,6 +25,9 @@ public class PermissionsController(
     IValidator<RequestPermissionDto> requestPermissionDtoValidator, 
     IValidator<ModifyPermissionDto> modifyPermissionDtoValidator) : ControllerBase
 {
+    /// <summary>
+    /// Creates a new <see cref="PermissionManager.Domain.Entities.Permission"/> 
+    /// </summary>
     [HttpPost]
     [SwaggerOperation("Request a new permission for an employee")]
     [SwaggerResponse(StatusCodes.Status201Created, "The permission was created successfully.")]
@@ -37,6 +43,9 @@ public class PermissionsController(
         return CreatedAtAction(nameof(GetByIdAsync), new { id }, null);
     }
 
+    /// <summary>
+    /// Updates an existing <see cref="PermissionManager.Domain.Entities.Permission"/>
+    /// </summary>
     [HttpPut("{id:int}")]
     [SwaggerOperation("Modifies the existing permission for an employee")]
     [SwaggerResponse(StatusCodes.Status204NoContent, "The permission was modified successfully.")]
@@ -62,6 +71,10 @@ public class PermissionsController(
         }
     }
 
+    /// <summary>
+    /// Returns a paginated list with all the <see cref="PermissionManager.Domain.Entities.Permission"/>
+    /// that matches the query
+    /// </summary>
     [HttpGet]
     [SwaggerOperation("Retrieves all the assigned permissions")]
     [SwaggerResponse(StatusCodes.Status200OK, "Returns a paginated result with all the assigned permission.")]
@@ -93,6 +106,9 @@ public class PermissionsController(
         });
     }
 
+    /// <summary>
+    /// Retrieves a single <see cref="PermissionManager.Domain.Entities.Permission"/> searching by its id
+    /// </summary>
     [HttpGet("{id:int}")]
     [SwaggerOperation("Retrieves an assigned permission by id")]
     [SwaggerResponse(StatusCodes.Status200OK, "Returns the requested permission.")]

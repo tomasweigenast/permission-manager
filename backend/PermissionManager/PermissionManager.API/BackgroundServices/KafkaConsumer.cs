@@ -4,6 +4,10 @@ using PermissionManager.Infrastructure.Kafka;
 
 namespace PermissionManager.API.BackgroundServices;
 
+/// <summary>
+/// A <see cref="BackgroundService"/> that consumes a Kafka topic for development and testing
+/// purposes.
+/// </summary>
 public class KafkaConsumer(IOptions<KafkaOptions> kafkaOptions, ILogger<KafkaConsumer> logger) : BackgroundService
 {
     private readonly IConsumer<Ignore, string> _consumer = new ConsumerBuilder<Ignore, string>(new ConsumerConfig

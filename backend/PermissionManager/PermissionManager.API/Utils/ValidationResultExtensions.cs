@@ -5,6 +5,9 @@ using PermissionManager.Core.Utils;
 
 namespace PermissionManager.API.Utils;
 
+/// <summary>
+/// Extension methods for <see cref="ValidationResult"/>
+/// </summary>
 public static class ValidationResultExtensions
 {
     private class CustomProblemDetails : ProblemDetails
@@ -14,6 +17,13 @@ public static class ValidationResultExtensions
         public required string TraceId { get; init; }
     }
     
+    /// <summary>
+    /// Converts the given <see cref="ValidationResult"/> to a <see cref="IActionResult"/> BadRequest with problems
+    /// </summary>
+    /// <param name="result">The <see cref="ValidationResult"/> to convert.</param>
+    /// <param name="modelState">The request <see cref="ModelStateDictionary"/></param>
+    /// <param name="traceId">The HttpContext Trace identifier of the request.</param>
+    /// <returns></returns>
     public static IActionResult ToBadRequestResult(this ValidationResult result, ModelStateDictionary modelState, string traceId) 
     {
         foreach (var error in result.Errors)

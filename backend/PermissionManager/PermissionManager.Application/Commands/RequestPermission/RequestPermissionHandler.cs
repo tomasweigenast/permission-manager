@@ -6,8 +6,20 @@ using PermissionManager.Domain.Interfaces;
 
 namespace PermissionManager.Application.Commands.RequestPermission;
 
+/// <summary>
+/// Handles the creation of a new permission request.
+/// <param name="unitOfWork">The unit of work for data access.</param>
+/// <param name="ftsService">The full-text search service for indexing.</param>
+/// <param name="producerService">The service for producing operation events.</param>
+/// </summary>
 public class RequestPermissionHandler(IUnitOfWork unitOfWork, IFullTextSearchService ftsService, IProducerService producerService) : IRequestHandler<RequestPermissionCommand, int>
 {
+    /// <summary>
+    /// Handles the RequestPermissionCommand request.
+    /// <param name="request">The command containing permission request details.</param>
+    /// <param name="cancellationToken">Token for cancelling the operation.</param>
+    /// <returns>The ID of the newly created permission.</returns>
+    /// </summary>
     public async Task<int> Handle(RequestPermissionCommand request, CancellationToken cancellationToken)
     {
         var entity = new Permission

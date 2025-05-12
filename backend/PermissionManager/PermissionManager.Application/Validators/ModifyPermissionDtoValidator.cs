@@ -3,6 +3,9 @@ using PermissionManager.Application.DTOs;
 
 namespace PermissionManager.Application.Validators;
 
+/// <summary>
+/// An <see cref="AbstractValidator{T}"/> which validates a <see cref="ModifyPermissionDto"/> record
+/// </summary>
 public class ModifyPermissionDtoValidator : AbstractValidator<ModifyPermissionDto>
 {
     public ModifyPermissionDtoValidator()

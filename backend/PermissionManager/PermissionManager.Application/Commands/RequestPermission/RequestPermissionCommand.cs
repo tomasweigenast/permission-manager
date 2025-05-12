@@ -2,7 +2,7 @@ using MediatR;
 
 namespace PermissionManager.Application.Commands.RequestPermission;
 
-public record RequestPermissionCommand : IRequest<int>
+public record  RequestPermissionCommand : IRequest<int>
 {
     public required string EmployeeName { get; init; }
     
