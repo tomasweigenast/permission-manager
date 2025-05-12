@@ -20,44 +20,80 @@ import { Link, useNavigate } from "react-router-dom";
 import type PermissionType from "../data/permission_type";
 import permissions from "../services/permissions_service";
 
+// State interfaces
+interface FormState {
+  employeeName: string;
+  employeeSurname: string;
+  typeId: string;
+}
+
+interface UIState {
+  loading: boolean;
+  typesLoading: boolean;
+  error: string;
+}
+
 export default function PermissionForm() {
-  const [types, setTypes] = useState<PermissionType[]>([]);
-  const [employeeName, setEmployeeName] = useState("");
-  const [employeeSurname, setEmployeeSurname] = useState("");
-  const [typeId, setTypeId] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [typesLoading, setTypesLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [formState, setFormState] = useState<FormState>({
+    employeeName: "",
+    employeeSurname: "",
+    typeId: "",
+  });
+
+  const [uiState, setUIState] = useState<UIState>({
+    loading: false,
+    typesLoading: true,
+    error: "",
+  });
+
+  const [permissionTypes, setPermissionTypes] = useState<PermissionType[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTypes = async () => {
       try {
-        setTypesLoading(true);
+        setUIState((prev) => ({ ...prev, typesLoading: true }));
         const permissionTypes = await permissions.getPermissionTypes();
-        setTypes(permissionTypes);
+        setPermissionTypes(permissionTypes);
       } catch (err) {
         console.error("Error fetching permission types:", err);
-        setError("Failed to load permission types. Please try again later.");
+        setUIState((prev) => ({
+          ...prev,
+          error: "Failed to load permission types. Please try again later.",
+        }));
       } finally {
-        setTypesLoading(false);
+        setUIState((prev) => ({ ...prev, typesLoading: false }));
       }
     };
 
     fetchTypes();
   }, []);
 
+  const handleInputChange = (field: keyof FormState, value: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const { employeeName, employeeSurname, typeId } = formState;
 
     if (!employeeName.trim() || !employeeSurname.trim() || !typeId) {
-      setError("Please fill all required fields.");
+      setUIState((prev) => ({
+        ...prev,
+        error: "Please fill all required fields.",
+      }));
       return;
     }
 
     try {
-      setLoading(true);
-      setError("");
+      setUIState((prev) => ({
+        ...prev,
+        loading: true,
+        error: "",
+      }));
 
       await permissions.requestPermission({
         employeeName,
@@ -68,10 +104,16 @@ export default function PermissionForm() {
       navigate("/");
     } catch (err) {
       console.error("Error creating permission:", err);
-      setError("Failed to create permission. Please try again.");
-      setLoading(false);
+      setUIState((prev) => ({
+        ...prev,
+        error: "Failed to create permission. Please try again.",
+        loading: false,
+      }));
     }
   };
+
+  const { employeeName, employeeSurname, typeId } = formState;
+  const { loading, typesLoading, error } = uiState;
 
   return (
     <Container maxWidth="md">
@@ -111,7 +153,9 @@ export default function PermissionForm() {
                     fullWidth
                     label="First Name"
                     value={employeeName}
-                    onChange={(e) => setEmployeeName(e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("employeeName", e.target.value)
+                    }
                     variant="outlined"
                     required
                     InputLabelProps={{ shrink: true }}
@@ -123,7 +167,9 @@ export default function PermissionForm() {
                     fullWidth
                     label="Last Name"
                     value={employeeSurname}
-                    onChange={(e) => setEmployeeSurname(e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("employeeSurname", e.target.value)
+                    }
                     variant="outlined"
                     required
                     InputLabelProps={{ shrink: true }}
@@ -136,14 +182,16 @@ export default function PermissionForm() {
                     select
                     label="Permission Type"
                     value={typeId}
-                    onChange={(e) => setTypeId(e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("typeId", e.target.value)
+                    }
                     variant="outlined"
                     required
                     InputLabelProps={{ shrink: true }}
                     placeholder="Select permission type"
-                    disabled={types.length === 0}
+                    disabled={permissionTypes.length === 0}
                   >
-                    {types.map((t) => (
+                    {permissionTypes.map((t) => (
                       <MenuItem key={t.id} value={t.id}>
                         {t.description}
                       </MenuItem>

@@ -27,158 +27,274 @@ import {
   type SelectChangeEvent,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import type Permission from "../data/permission";
 import type PermissionType from "../data/permission_type";
 import permissions_service from "../services/permissions_service";
 import EditPermissionDialog from "./EditPermissionDialog";
 
-export default function PermissionList() {
-  const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [permissionTypes, setPermissionTypes] = useState<PermissionType[]>([]);
-  const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editLoading, setEditLoading] = useState(false);
-  const [editError, setEditError] = useState("");
+// State interfaces
+interface DataState {
+  permissions: Permission[];
+  permissionTypes: PermissionType[];
+  hasMore: boolean;
+}
 
-  // Pagination state
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+interface UIState {
+  loading: boolean;
+  error: string;
+}
 
-  // Filter state
-  const [selectedPermissionType, setSelectedPermissionType] = useState<
-    number | undefined
-  >(undefined);
+interface PaginationState {
+  page: number;
+  rowsPerPage: number;
+}
 
-  // State for edited permission
-  const [editedPermission, setEditedPermission] = useState<{
+interface EditState {
+  open: boolean;
+  loading: boolean;
+  error: string;
+  permission: {
     id: number;
     employee_name: string;
     employee_surname: string;
     permission_type_id: number;
-  }>({
-    id: 0,
-    employee_name: "",
-    employee_surname: "",
-    permission_type_id: 0,
+  };
+}
+
+export default function PermissionList() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const initialPage = parseInt(searchParams.get("page") || "0");
+  const initialRowsPerPage = parseInt(searchParams.get("page_size") || "5");
+  const initialPermissionType = searchParams.get("permission_type_id")
+    ? parseInt(searchParams.get("permission_type_id") || "0")
+    : undefined;
+
+  const [dataState, setDataState] = useState<DataState>({
+    permissions: [],
+    permissionTypes: [],
+    hasMore: false,
   });
+
+  const [uiState, setUIState] = useState<UIState>({
+    loading: true,
+    error: "",
+  });
+
+  const [paginationState, setPaginationState] = useState<PaginationState>({
+    page: initialPage,
+    rowsPerPage: initialRowsPerPage,
+  });
+
+  const [selectedPermissionType, setSelectedPermissionType] = useState<
+    number | undefined
+  >(initialPermissionType);
+
+  const [editState, setEditState] = useState<EditState>({
+    open: false,
+    loading: false,
+    error: "",
+    permission: {
+      id: 0,
+      employee_name: "",
+      employee_surname: "",
+      permission_type_id: 0,
+    },
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (paginationState.page !== 0) {
+      params.set("page", paginationState.page.toString());
+    }
+
+    if (paginationState.rowsPerPage !== 5) {
+      params.set("page_size", paginationState.rowsPerPage.toString());
+    }
+
+    if (selectedPermissionType !== undefined && selectedPermissionType !== 0) {
+      params.set("permission_type_id", selectedPermissionType.toString());
+    }
+
+    setSearchParams(params);
+  }, [
+    paginationState.page,
+    paginationState.rowsPerPage,
+    selectedPermissionType,
+    setSearchParams,
+  ]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
+        setUIState((prev) => ({ ...prev, loading: true }));
+
         const [permissionsRes, typesRes] = await Promise.all([
           permissions_service.getPermissions({
-            pageSize: rowsPerPage,
-            page: page + 1, // because mui its 0 based
+            pageSize: paginationState.rowsPerPage,
+            page: paginationState.page + 1, // because mui its 0 based
             permissionTypeId: selectedPermissionType,
           }),
           permissions_service.getPermissionTypes(),
         ]);
-        setPermissions(permissionsRes.items);
-        setPermissionTypes(typesRes);
-        setHasMore(permissionsRes.hasMore);
-        setError("");
+
+        setDataState({
+          permissions: permissionsRes.items,
+          permissionTypes: typesRes,
+          hasMore: permissionsRes.hasMore,
+        });
+
+        setUIState((prev) => ({ ...prev, error: "" }));
       } catch (err) {
         console.error("Error fetching data:", err);
-        setError("Failed to load data. Please try again later.");
+        setUIState((prev) => ({
+          ...prev,
+          error: "Failed to load data. Please try again later.",
+        }));
       } finally {
-        setLoading(false);
+        setUIState((prev) => ({ ...prev, loading: false }));
       }
     };
 
     fetchData();
-  }, [selectedPermissionType, page, rowsPerPage]);
+  }, [
+    selectedPermissionType,
+    paginationState.page,
+    paginationState.rowsPerPage,
+  ]);
 
   const handleEdit = (permission: Permission) => {
-    setEditedPermission({
-      id: permission.id,
-      employee_name: permission.employee_name,
-      employee_surname: permission.employee_surname,
-      permission_type_id: permission.permission_type.id,
+    setEditState({
+      ...editState,
+      open: true,
+      error: "",
+      permission: {
+        id: permission.id,
+        employee_name: permission.employee_name,
+        employee_surname: permission.employee_surname,
+        permission_type_id: permission.permission_type.id,
+      },
     });
-    setEditDialogOpen(true);
-    setEditError("");
   };
 
   const handleUpdateEditField = (field: string, value: string | number) => {
-    setEditedPermission((prev) => ({
+    setEditState((prev) => ({
       ...prev,
-      [field]: value,
+      permission: {
+        ...prev.permission,
+        [field]: value,
+      },
     }));
   };
 
   const handleCloseEdit = () => {
-    setEditDialogOpen(false);
+    setEditState((prev) => ({ ...prev, open: false }));
   };
 
   const handleSaveEdit = async () => {
+    const { permission } = editState;
+
     if (
-      !editedPermission.employee_name.trim() ||
-      !editedPermission.employee_surname.trim()
+      !permission.employee_name.trim() ||
+      !permission.employee_surname.trim()
     ) {
-      setEditError("Please fill all required fields.");
+      setEditState((prev) => ({
+        ...prev,
+        error: "Please fill all required fields.",
+      }));
       return;
     }
 
     try {
-      setEditLoading(true);
-      setEditError("");
+      setEditState((prev) => ({
+        ...prev,
+        loading: true,
+        error: "",
+      }));
 
       await permissions_service.modifyPermission({
-        permissionId: editedPermission.id,
-        employeeName: editedPermission.employee_name,
-        employeeSurname: editedPermission.employee_surname,
-        permissionTypeId: editedPermission.permission_type_id,
+        permissionId: permission.id,
+        employeeName: permission.employee_name,
+        employeeSurname: permission.employee_surname,
+        permissionTypeId: permission.permission_type_id,
       });
 
       // Update permissions list with edited data
-      const updatedPermissions = permissions.map((p) =>
-        p.id === editedPermission.id
+      const updatedPermissions = dataState.permissions.map((p) =>
+        p.id === permission.id
           ? {
               ...p,
-              employee_name: editedPermission.employee_name,
-              employee_surname: editedPermission.employee_surname,
+              employee_name: permission.employee_name,
+              employee_surname: permission.employee_surname,
               permission_type:
-                permissionTypes.find(
-                  (t) => t.id === editedPermission.permission_type_id
+                dataState.permissionTypes.find(
+                  (t) => t.id === permission.permission_type_id
                 ) || p.permission_type,
             }
           : p
       );
 
-      setPermissions(updatedPermissions);
-      setEditDialogOpen(false);
+      setDataState((prev) => ({
+        ...prev,
+        permissions: updatedPermissions,
+      }));
+
+      setEditState((prev) => ({
+        ...prev,
+        open: false,
+      }));
     } catch (err) {
       console.error("Error updating permission:", err);
-      setEditError("Failed to update permission. Please try again.");
+      setEditState((prev) => ({
+        ...prev,
+        error: "Failed to update permission. Please try again.",
+      }));
     } finally {
-      setEditLoading(false);
+      setEditState((prev) => ({
+        ...prev,
+        loading: false,
+      }));
     }
   };
 
   // Pagination handlers
   const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
+    setPaginationState((prev) => ({
+      ...prev,
+      page: newPage,
+    }));
   };
 
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    setPaginationState({
+      page: 0,
+      rowsPerPage: parseInt(event.target.value, 10),
+    });
   };
 
   // Filter handler
   const handleFilterChange = (event: SelectChangeEvent<number>) => {
-    setSelectedPermissionType(event.target.value);
+    const newValue = event.target.value as number;
+    setSelectedPermissionType(newValue);
+
+    // reset page when changing filters
+    setPaginationState((prev) => ({
+      ...prev,
+      page: 0,
+    }));
   };
 
   function labelDisplayedRows({ from, to }: LabelDisplayedRowsArgs) {
     return `${from}-${to}`;
   }
+
+  const { permissions, permissionTypes, hasMore } = dataState;
+  const { loading, error } = uiState;
+  const { page, rowsPerPage } = paginationState;
 
   return (
     <Card elevation={3} sx={{ width: "100%" }}>
@@ -327,11 +443,11 @@ export default function PermissionList() {
       </CardContent>
 
       <EditPermissionDialog
-        open={editDialogOpen}
-        permission={editedPermission}
+        open={editState.open}
+        permission={editState.permission}
         permissionTypes={permissionTypes}
-        loading={editLoading}
-        error={editError}
+        loading={editState.loading}
+        error={editState.error}
         onClose={handleCloseEdit}
         onSave={handleSaveEdit}
         onUpdateField={handleUpdateEditField}
